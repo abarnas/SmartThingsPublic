@@ -54,6 +54,7 @@ metadata {
       command "mute"
       command "netflix"
       command "plex"
+      command "sling"
       command "WOLC"
       command "ipaddress"
       command "iphex"
@@ -205,6 +206,10 @@ metadata {
       standardTile("plex", "device.switch", inactiveLabel: false, height: 1, width: 1, decoration: "flat") {
          state "default", label:"Plex", action:"plex", icon:""
       }
+      
+      standardTile("sling", "device.switch", inactiveLabel: false, height: 1, width: 1, decoration: "flat") {
+         state "default", label:"Slex", action:"sling", icon:""
+      }      
 
       standardTile("home", "device.switch", inactiveLabel: false, height: 1, width: 1, decoration: "flat") {
          state "default", label:"HOME", action:"home", icon:""
@@ -576,7 +581,7 @@ metadata {
     
       main "switch"
          //A number of the available buttons are commented out in the lines below, All of these buttons work but having all of them avilable slowed down the smart things phone application. if you would like some of these buttons availabel to you you can move them out of the commented line on to the line above 
-      details(["switch", "hdmi1", "hdmi2", "hdmi3", "hdmi4", "netflix", "Plex", "Digital", "tv_source", "home", "mute", "picoff", "gguide", "epg", "favorites", "display", "options", "retu", "up", "down", "right", "left", "confirm", "Forward", "Play", "Rewind", "Prev", "Stop", "Next", "Rec", "Pause", "Eject", "volumeup", "volumedown", "ChannelUp", "ChannelDown",
+      details(["switch", "hdmi1", "hdmi2", "hdmi3", "hdmi4", "netflix", "plex", "sling", "tv_source", "home", "mute", "picoff", "gguide", "epg", "favorites", "display", "options", "retu", "up", "down", "right", "left", "confirm", "Forward", "Play", "Rewind", "Prev", "Stop", "Next", "Rec", "Pause", "Eject", "volumeup", "volumedown", "ChannelUp", "ChannelDown",
          /** "green", "yellow", "blue", "num1", "num2", "num3", "num4", "num5", "num6", "num7", "num8", "num9", "num0", "num11", "num12", "SubTitle", "ClosedCaption", "Enter", "DOT", "Analog", "Teletext", "Exit", "Analog2", "AD", "Analogg", "BS", "CS", "BSCS", "Ddata", "PicOff", "Tv_Radio", "Theater", "SEN", "InternetWidgets", "InternetVideo", "SceneSelect", "Mode3D", "iManual", "Audio", "Wide", "Jump", "PAP", "MyEPG", "ProgramDescription", "WriteChapter", "TrackID", "TenKey", "AppliCast", "acTVila", "DeleteVideo", "PhotoFrame", "TvPause", "KeyPad", "Media", "FlashPlus", "FlashMinus", "TopMenu", "RakurakuStart", "OneTouchTimeRec", "OneTouchView", "OneTouchRec", "OneTouchStop", "DUX", "FootballMode", "Social",*/ 
          "WOLC", "refresh"
          ])
@@ -677,15 +682,17 @@ private sendJsonRpcCommand(json) {
     headers: headers
   )
 
-  result
+  sendHubCommand(result)
 }
 
 
 private sendJsonAppCommand(json) {
   def headers = [:]
   headers.put("HOST", "${state.tv_ip}:${tv_port}")
-  headers.put("Content-Type", "application/json")
+  headers.put("Accept", "application/xml")
+  headers.put("Content-Type", "application/xml")
   headers.put("X-Auth-PSK", "${tv_psk}")
+  headers.put("SOAPAction", "urn:schemas-sony-com:service:IRCC:1#X_SendIRCC")
 
   def result = new physicalgraph.device.HubAction(
     method: 'POST',
@@ -694,7 +701,7 @@ private sendJsonAppCommand(json) {
     headers: headers
   )
 
-  result
+  sendHubCommand(result)
 }
 
 
@@ -751,12 +758,23 @@ All remote Functions Assigned below
 --------------------------------------------------------*/
 
 def plex(){
-	//Start Plex
-  def appcmd = "com.sony.dtv.com.plexapp.android.com.plexapp.plex.activities.SplashActivity"
-  def json = "{\"method\":\"setActiveApp\",\"version\":\"1.0\",\"params\":[{\"uri\":\"${appcmd}\"}],\"id\":10}"
+  //Start Plex
+  def json = "{\"method\":\"setActiveApp\",\"params\":[{\"uri\":\"com.sony.dtv.com.plexapp.android.com.plexapp.plex.activities.SplashActivity\"}],\"id\":10, \"version\":\"1.0\"}"
+  log.debug( "${json}" )
+
   def result = sendJsonAppCommand(json)
-  log.debug( "hubAction = ${json}")
+  log.debug( "${result}" )
 }
+
+def sling(){
+  //Start Sling
+  def json = "{\"method\":\"setActiveApp\",\"params\":[{\"uri\":\"com.sony.dtv.com.sling.com.movenetworks.StartupActivity\"}],\"id\":10, \"version\":\"1.0\"}"
+  log.debug( "${json}" )
+
+  def result = sendJsonAppCommand(json)
+  log.debug( "${result}" )
+}
+
 
 def digital(){
 	//Set Remote command to send
